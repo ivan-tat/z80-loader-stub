@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+# Convert .pbm-image file into assembler source file for "sdcc".
+#
+# Uses Debian packages:
+#   coreutils, graphicsmagick, sed.
+#
+# Uses local tools:
+#   revbits.
+#
+# Public domain.
+
+set -e
+
+REVBITS=`dirname $0`/revbits
+
+if [ "$#" -ne 1 ]; then
+    echo "Usage:
+    $0  <InputFile>"
+    exit 1
+fi
+
+InputFile="$1"
+
+tmp=`mktemp`
+gm convert "$InputFile" mono:- | \
+$REVBITS | \
+od -An -t u1 -v -w8 - | \
+sed -r -e 's/[[:space:]]+([[:digit:]]+)/, \1/g' -e 's/^,/    .db /'

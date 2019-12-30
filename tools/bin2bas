@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+# Convert binary data file into input file for "zmakebas".
+#
+# Uses Debian packages:
+#   coreutils, sed.
+#
+# Public domain.
+
+set -e
+
+if [ "$#" -lt 1 -o "$#" -gt 2 ]; then
+    echo "Usage:
+    $0  <InputFile>"
+    exit 1
+fi
+
+InputFile="$1"
+
+od -An -t u1 -v -w8 "$InputFile" | \
+sed -r -e 's/[[:space:]]*([[:digit:]]+)/\\{\1}/g' -e 's/$/\\/'

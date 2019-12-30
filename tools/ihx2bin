@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# Uses Debian packages:
+#   coreutils, sdcc ("makebin" utility).
+#
+# Public domain.
+
+set -e
+
+BIN=makebin
+
+if [ "$#" -ne 3 ]; then
+    echo "Usage:
+    $0  <DataOffset> <InputFile> <OutputFile>"
+    exit 1
+fi
+
+DataOffset="$1"
+InputFile="$2"
+OutputFile="$3"
+
+tmp=`mktemp`
+$BIN -p -s 65536 "$InputFile" > "$tmp"
+dd if="$tmp" of="$OutputFile" bs=1 skip="$DataOffset"
+rm -f "$tmp"
