@@ -18,6 +18,14 @@ make all
 
 This will produce `tape.tap` and `tape.wav` files.
 
+## Test
+
+```sh
+./test
+```
+
+This will run a test script to test the results.
+
 ## Clean
 
 ```sh
@@ -37,6 +45,10 @@ make clean
 * [GNU sed](https://www.gnu.org/software/sed/) - stream editor for filtering/transforming text ([package](https://pkgs.org/download/sed))
 
 * [GNU iconv](https://www.gnu.org/software/libiconv/) - utility to convert text from one character encoding to another ([package](https://pkgs.org/download/iconv), [Debian](https://pkgs.org/download/libc-bin))
+
+* [dialog](http://invisible-island.net/dialog/dialog.html) - displays user-friendly dialog boxes from shell scripts ([package](https://pkgs.org/download/dialog))
+
+* [whiptail](https://pagure.io/newt) - simplified `dialog` utility replacement ([package](https://pkgs.org/download/whiptail))
 
 * [Small Devices C Compiler](http://sdcc.sourceforge.net/) ([package](https://pkgs.org/download/sdcc))
 
