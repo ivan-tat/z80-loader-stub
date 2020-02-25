@@ -7,7 +7,6 @@ ASZ80FLAGS = -l
 LDZ80      = sdldz80
 LDZ80FLAGS =
 MKBIN      = makebin
-IHX2BIN    = ./tools/ihx2bin
 BIN2BAS    = ./tools/bin2bas
 PBM2ASM    = ./tools/pbm2asm
 MKBAS      = zmakebas
@@ -96,7 +95,7 @@ loadtitle.s: loadtitle.pbm tools/revbits
 loader: loader.bin
 
 loader.bin: loader.ihx
-	$(IHX2BIN) $(LoaderStart) $< $@
+	$(MKBIN) -p -s 65536 $< | dd ibs=1 skip=$(LoaderStart) of=$@ 2>/dev/null
 
 loader.ihx: loader.rel
 	$(LDZ80) $(LDZ80FLAGS) -b _CODE=$(LoaderStart) -i $<
