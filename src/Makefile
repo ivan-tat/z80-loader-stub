@@ -11,12 +11,25 @@ BIN2BAS    = ./tools/bin2bas
 PBM2ASM    = ./tools/pbm2asm
 MKBAS      = zmakebas
 MKWAV      = tape2wav
-loader_basic_entry = loadb-0.b.long
-#loader_basic_entry = loadb-0.b.short
+loader_head = templates/loader-head-long.bas
+#loader_head = templates/loader-head-short.bas
 TMPS       =
 
 tmp         = temp.tmp
 LoaderStart = 28800
+
+# Assigns specified shell's variable a BASIC integer number in compact form.
+# $(1)=name $(2)=value
+define set_int_compact =
+	if   [ $(2) -eq 0 ]; then $(1)='not pi'; \
+	elif [ $(2) -eq 1 ]; then $(1)='sgn pi'; \
+	elif [ $(2) -eq 3 ]; then $(1)='int pi'; \
+	elif [ $(2) -lt 32 -o $(2) -eq 34 -o $(2) -gt 255 ]; then \
+		$(1)="val \"$(2)\""; \
+	else \
+		$(1)="code \"\\\\{$(2)}\""; \
+	fi
+endef
 
 .PHONY: empty clean
 
@@ -29,7 +42,7 @@ all: tools/revbits test.tap test.wav
 tools/revbits: tools/revbits.mk
 	make -C $(<D) -f $(<F) all
 
-test.tap: loadb.bas
+test.tap: loader-full.bas
 	$(MKBAS) -n "Test" -a 1 -o $@ $<
 TMPS += test.tap
 
@@ -37,92 +50,76 @@ test.wav: test.tap
 	$(MKWAV) $< $@
 TMPS += test.wav
 
-##############################
-# Parts of BASIC loader stub #
-##############################
-
-loadb-0.bas: $(loader_basic_entry)
-	cp $< "$(tmp)"
-	echo "" >> "$(tmp)"
-	mv "$(tmp)" $@
-TMPS += loadb-0.bas
-
-loadb-0.bin: loadb-0.bas
-	$(MKBAS) -a 1 -r -o $@ $<
-TMPS += loadb-0.bin
-
-loadb-2.bas: loadb-0.bin loadb-2.b
-	sed -r \
-		-e "s/\{LoaderStart\}/$(LoaderStart)/g" \
-		-e "s/\{SkipOffset\}/`stat -c "%s" loadb-0.bin`/g" \
-		loadb-2.b > $@
-TMPS += loadb-2.bas
-
-###############################
-# The whole BASIC loader stub #
-###############################
-
-loadb: loadb.bas
-
-loadb.bas: $(loader_basic_entry) stub.bin loadb-2.bas
+loader-head.bas: $(loader_head)
 	cp $< $@
-	$(BIN2BAS) stub.bin >> $@
-	cat loadb-2.bas >> $@
-TMPS += loadb.bas
+TMPS += loader-head.bas
 
-##################
-# Loader's title #
-##################
-
-loadtitle.s: loadtitle.pbm tools/revbits
-	$(PBM2ASM) $< > $@
-TMPS += loadtitle.s
-
-###############
-# Main loader #
-###############
-
-loader: loader.bin
-
-loader.bin: loader.ihx
-	$(MKBIN) -p -s 65536 $< | dd ibs=1 skip=$(LoaderStart) of=$@ 2>/dev/null
-TMPS += loader.bin
-
-loader.ihx: loader.rel
-	$(LDZ80) $(LDZ80FLAGS) -b _CODE=$(LoaderStart) -i $<
-TMPS += loader.ihx
-
-loader.rel: loader.s loadtitle.s
-	$(ASZ80) $(ASZ80FLAGS) -ol $<
-TMPS += loader.rel loader.lst
-
-########################
-# Stub for main loader #
-########################
-
-stub: stub.bin
-
-stub.bin: loader.bin stub.ihx
-	$(MKBIN) -p stub.ihx > "$(tmp)"
-	cat "$(tmp)" loader.bin > $@
+loader-head.bin: loader-head.bas
+	cp $< "$(tmp)"
+	head -n-1 $< > "$(tmp)"
+	tail -n 1 $< | sed -re 's/(.+)\\/\1/' >> "$(tmp)"
+	$(MKBAS) -a 1 -r -o $@ "$(tmp)"
 	$(RM) "$(tmp)"
-TMPS += stub.bin
+TMPS += loader-head.bin
 
-stub.ihx: stub.rel
-	$(LDZ80) $(LDZ80FLAGS) -b _CODE=0 -i $<
-TMPS += stub.ihx
+loader-title.s: loader-title.pbm tools/revbits
+	$(PBM2ASM) $< > $@
+TMPS += loader-title.s
 
-stub.rel: stub.s
+loader-asm.rel: loader-asm.s loader-title.s
 	$(ASZ80) $(ASZ80FLAGS) -ol $<
-TMPS += stub.rel stub.lst
+TMPS += loader-asm.rel loader-asm.lst
 
-stub.s: stub-0.s loadb-0.bin loader.bin
+loader-asm.ihx: loader-asm.rel
+	$(LDZ80) $(LDZ80FLAGS) -b _CODE=$(LoaderStart) -i $<
+TMPS += loader-asm.ihx
+
+loader-asm.bin: loader-asm.ihx
+	$(MKBIN) -p -s 65536 $< | dd ibs=1 skip=$(LoaderStart) of=$@ 2>/dev/null
+TMPS += loader-asm.bin
+
+startup.s: templates/startup.s loader-head.bin loader-asm.bin
 	sed -r \
-		-e "s/\{SkipOffset\}/`stat -c "%s" loadb-0.bin`-1/g" \
+		-e "s/\{SkipOffset\}/`stat -c "%s" loader-head.bin`-1/g" \
 		-e "s/\{LoaderStart\}/$(LoaderStart)/g" \
-		-e "s/\{LoaderSize\}/`stat -c "%s" loader.bin`/g" \
+		-e "s/\{LoaderSize\}/`stat -c "%s" loader-asm.bin`/g" \
 		 $< > $@
-TMPS += stub.s
+TMPS += startup.s
+
+startup.rel: startup.s
+	$(ASZ80) $(ASZ80FLAGS) -ol $<
+TMPS += startup.rel startup.lst
+
+startup.ihx: startup.rel
+	$(LDZ80) $(LDZ80FLAGS) -b _CODE=0 -i $<
+TMPS += startup.ihx
+
+startup.bin: startup.ihx
+	$(MKBIN) -p $< > $@
+TMPS += startup.bin
+
+loader-body.bin: startup.bin loader-asm.bin
+	cat $^ > $@
+TMPS += loader-body.bin
+
+loader-body.bas: loader-body.bin
+	$(BIN2BAS) $< > $(tmp)
+	head -n-1 $(tmp) > $@
+	tail -n 1 $(tmp) | sed -re 's/(.+)\\/\1/' >> $@
+	$(RM) "$(tmp)"
+TMPS += loader-body.bas
+
+loader-tail.bas: templates/loader-tail.bas loader-head.bin
+	$(call set_int_compact,SkipOffset,$(shell stat -c "%s" loader-head.bin)); \
+	sed -r \
+		-e "s/\{LoaderStart\}/$(LoaderStart)/g" \
+		-e "s/\{SkipOffset\}/$$SkipOffset/g" \
+		$< > $@
+TMPS += loader-tail.bas
+
+loader-full.bas: loader-head.bas loader-body.bas loader-tail.bas
+	cat $^ > $@
+TMPS += loader-full.bas
 
 clean:
 	$(RM) $(TMPS)
