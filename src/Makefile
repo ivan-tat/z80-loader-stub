@@ -3,9 +3,9 @@ CFLAGS     = -O3 -Wall
 CCZ80      = sdcc
 CZ80FLAGS  = -mz80 -no-std-crt0
 ASZ80      = sdasz80
-ASZ80FLAGS =
+ASZ80FLAGS = -pw
 LDZ80      = sdldz80
-LDZ80FLAGS = -nw
+LDZ80FLAGS = -w
 MKBIN      = makebin
 BIN2BAS    = ./tools/bin2bas
 PBM2ASM    = ./tools/pbm2asm
@@ -31,24 +31,14 @@ define set_int_compact =
 	fi
 endef
 
-.PHONY: empty clean
+.PHONY: empty all clean
 
 empty:
 	@echo 'Usage:'; \
 	echo '  make [ all | clean ]'
 
-all: tools/revbits test.tap test.wav
-
 tools/revbits: tools/revbits.mk
 	make -C $(<D) -f $(<F) all
-
-test.tap: loader-full.bas
-	$(MKBAS) -n "Test" -a 1 -o $@ $<
-TMPS += test.tap
-
-test.wav: test.tap
-	$(MKWAV) $< $@
-TMPS += test.wav
 
 loader-head.bas: $(loader_head)
 	cp $< $@
@@ -120,6 +110,16 @@ TMPS += loader-tail.bas
 loader-full.bas: loader-head.bas loader-body.bas loader-tail.bas
 	cat $^ > $@
 TMPS += loader-full.bas
+
+test.tap: loader-full.bas
+	$(MKBAS) -n "Test" -a 1 -o $@ $<
+TMPS += test.tap
+
+test.wav: test.tap
+	$(MKWAV) $< $@
+TMPS += test.wav
+
+all: tools/revbits test.tap test.wav
 
 clean:
 	$(RM) $(TMPS)

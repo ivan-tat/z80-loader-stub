@@ -5,6 +5,7 @@ border not pi:\
 bright not pi:\
 flash not pi:\
 inverse not pi:\
+over not pi:\
 cls:\
 clear val "{LoaderStart}":\
 let a=val "23635":\
