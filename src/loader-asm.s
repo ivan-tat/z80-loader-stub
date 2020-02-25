@@ -1,5 +1,7 @@
+.include "conf/defs.s"
+
 .area _HEADER (ABS)
-.org 28800
+.org LoaderStart
 
 .area _CODE
 

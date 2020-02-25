@@ -1,3 +1,5 @@
+include conf/defs.mk
+
 CC         = gcc
 CFLAGS     = -O3 -Wall
 CCZ80      = sdcc
@@ -14,9 +16,7 @@ MKWAV      = tape2wav
 loader_head = templates/loader-head-long.bas
 #loader_head = templates/loader-head-short.bas
 TMPS       =
-
 tmp         = temp.tmp
-LoaderStart = 28800
 
 # Assigns specified shell's variable a BASIC integer number in compact form.
 # $(1)=name $(2)=value
