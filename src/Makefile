@@ -7,7 +7,7 @@ CZ80FLAGS  = -mz80 -no-std-crt0
 ASZ80      = sdasz80
 ASZ80FLAGS = -pw
 LDZ80      = sdldz80
-LDZ80FLAGS = -w
+LDZ80FLAGS = -nw
 MKBIN      = makebin
 BIN2BAS    = ./tools/bin2bas
 PBM2ASM    = ./tools/pbm2asm
@@ -52,11 +52,11 @@ loader-head.bin: loader-head.bas
 	$(RM) "$(tmp)"
 TMPS += loader-head.bin
 
-loader-title.s: loader-title.pbm tools/revbits
+loader-title.inc: loader-title.pbm tools/revbits
 	$(PBM2ASM) $< > $@
-TMPS += loader-title.s
+TMPS += loader-title.inc
 
-loader-asm.rel: loader-asm.s loader-title.s
+loader-asm.rel: loader-asm.s loader-title.inc
 	$(ASZ80) $(ASZ80FLAGS) -ol $<
 TMPS += loader-asm.rel loader-asm.lst
 

@@ -1,11 +1,10 @@
-.include "conf/defs.s"
+.include "conf/defs.def"
 
 .area _HEADER (ABS)
 .org LoaderStart
 
 .area _CODE
-
-.include "gfx_macros.s"
+.include "gfx_macros.inc"
 
 .equ TITLE_H, 14
 .equ TITLE_W, 8
@@ -66,4 +65,4 @@ _main::
 .area _DATA
 
 _data:
-.include "loader-title.s"
+.include "loader-title.inc"
