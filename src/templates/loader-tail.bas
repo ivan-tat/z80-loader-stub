@@ -7,7 +7,7 @@ flash not pi:\
 inverse not pi:\
 over not pi:\
 cls:\
-clear val "{LoaderStart}":\
+clear {LoaderStart}:\
 let a=val "23635":\
 let b=a+sgn pi:\
 let c={SkipOffset}+peek a+val "256"*peek b:\

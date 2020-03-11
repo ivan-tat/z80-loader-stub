@@ -25,7 +25,10 @@ define set_int_compact =
 	elif [ $(2) -eq 1 ]; then $(1)='sgn pi'; \
 	elif [ $(2) -eq 3 ]; then $(1)='int pi'; \
 	elif [ $(2) -lt 32 -o $(2) -eq 34 -o $(2) -gt 255 ]; then \
-		$(1)="val \"$(2)\""; \
+		if   [ $$(($(2)%10000)) -eq 0 ]; then $(1)="val \"$$(($(2)/10000))e4\""; \
+		elif [ $$(($(2)% 1000)) -eq 0 ]; then $(1)="val \"$$(($(2)/ 1000))e3\""; \
+		else $(1)="val \"$(2)\""; \
+		fi; \
 	else \
 		$(1)="code \"\\\\{$(2)}\""; \
 	fi
@@ -100,10 +103,11 @@ loader-body.bas: loader-body.bin
 TMPS += loader-body.bas
 
 loader-tail.bas: templates/loader-tail.bas loader-head.bin
-	$(call set_int_compact,SkipOffset,$(shell stat -c "%s" loader-head.bin)); \
+	$(call set_int_compact,_LoaderStart,$(LoaderStart)); \
+	$(call set_int_compact,_SkipOffset,$(shell stat -c "%s" loader-head.bin)); \
 	sed -r \
-		-e "s/\{LoaderStart\}/$(LoaderStart)/g" \
-		-e "s/\{SkipOffset\}/$$SkipOffset/g" \
+		-e "s/\{LoaderStart\}/$$_LoaderStart/g" \
+		-e "s/\{SkipOffset\}/$$_SkipOffset/g" \
 		$< > $@
 TMPS += loader-tail.bas
 
