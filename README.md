@@ -10,6 +10,23 @@ See [AUTHORS](AUTHORS) file.
 
 Public domain (see [LICENSE](LICENSE) file).
 
+## Configuration
+
+```sh
+make configure-TARGET
+```
+
+where TARGET is one of:
+
+* short - short loader form (no BASIC comments)
+* long - long loader form (with BASIC comments) - this is the *default*
+
+## Tools compilation (optional)
+
+```sh
+make build-tools
+```
+
 ## Compile
 
 ```sh

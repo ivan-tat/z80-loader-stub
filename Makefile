@@ -1,13 +1,22 @@
 include conf.mk
 
+MFLAGS    ?= -w
 TARGET_MK = $(srcdir)/Makefile
 
-.DEFAULT_GOAL = empty
+PHONY_TARGETS = \
+ all \
+ build-tools \
+ clean \
+ clean-conf \
+ clean-tools \
+ configure-long \
+ configure-short \
+ dist-clean \
+ usage
 
-.PHONY: empty all clean
+.PHONY: $(PHONY_TARGETS)
 
-empty clean: $(TARGET_MK)
-	@make -C $(<D) -f $(<F) $@
+.DEFAULT_GOAL = usage
 
-all: $(TARGET_MK)
-	@make -C $(<D) -f $(<F) $@
+$(PHONY_TARGETS): $(TARGET_MK)
+	@$(MAKE) $(MFLAGS) -C $(<D) -f $(<F) $@

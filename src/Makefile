@@ -1,5 +1,11 @@
+# Supported environment:
+#   GNU/Linux
+
 include conf/defs.mk
 
+# tools
+
+MFLAGS     ?= -w
 CC         = gcc
 CFLAGS     = -O3 -Wall
 CCZ80      = sdcc
@@ -9,14 +15,22 @@ ASZ80FLAGS = -pw
 LDZ80      = sdldz80
 LDZ80FLAGS = -nw
 MKBIN      = makebin
-BIN2BAS    = ./tools/bin2bas
-PBM2ASM    = ./tools/pbm2asm
 MKBAS      = zmakebas
 MKWAV      = tape2wav
-loader_head = templates/loader-head-long.bas
-#loader_head = templates/loader-head-short.bas
+
+# local tools
+
+BIN2BAS    = ./tools/bin2bas
+PBM2ASM    = ./tools/pbm2asm
+
+# local variables
+
+tmp        = temp.tmp
 TMPS       =
-tmp         = temp.tmp
+
+# local scripts
+
+need_to_configure = $(error Run "$(MAKE) configure-TARGET" first)
 
 # Assigns specified shell's variable a BASIC integer number in compact form.
 # $(1)=name $(2)=value
@@ -34,17 +48,68 @@ define set_int_compact =
 	fi
 endef
 
-.PHONY: empty all clean
+.PHONY: \
+ all \
+ build-revbits \
+ build-tools \
+ clean \
+ clean-conf \
+ clean-revbits \
+ clean-tools \
+ configure-long \
+ configure-short \
+ dist-clean \
+ usage
 
-empty:
+usage:
 	@echo 'Usage:'; \
-	echo '  make [ all | clean ]'
+	echo '  $(MAKE) [ build-tools | clean-tools | configure-TARGET | all | clean | dist-clean ]'; \
+	echo 'where:'; \
+	echo '  build-tools - build local tools'; \
+	echo '  clean-tools - clean local tools'; \
+	echo '  configure-TARGET - configure the project for specified target'; \
+	echo '  all         - build project'; \
+	echo '  clean       - clean only project files'; \
+	echo '  clean-conf  - clean only configuration files'; \
+	echo '  dist-clean  - clean all (local tools, project and configuration files)'; \
+	echo 'TARGET is one of:'; \
+	echo '  short - short loader form'; \
+	echo '  long  - long loader form'
+
+# tools
+
+$(PBM2ASM): tools/revbits
+
+build-revbits: tools/revbits
 
 tools/revbits: tools/revbits.mk
-	make -C $(<D) -f $(<F) all
+	$(MAKE) $(MFLAGS) -C $(<D) -f $(<F) all
 
-loader-head.bas: $(loader_head)
-	cp $< $@
+clean-revbits: tools/revbits.mk
+	$(MAKE) $(MFLAGS) -C $(<D) -f $(<F) clean
+
+build-tools: build-revbits
+
+clean-tools: clean-revbits
+
+# configure
+
+configure-short: templates/loader-head-short.bas
+	echo -n '$<' > conf/loader-head.lnk
+
+configure-long: templates/loader-head-long.bas
+	echo -n '$<' > conf/loader-head.lnk
+
+conf/loader-head.lnk:
+	$(call need_to_configure)
+
+clean-conf:
+	$(RM) conf/loader-head.lnk
+
+# sources
+
+loader-head.bas: conf/loader-head.lnk
+	cp `cat $<` $@
 TMPS += loader-head.bas
 
 loader-head.bin: loader-head.bas
@@ -55,7 +120,7 @@ loader-head.bin: loader-head.bas
 	$(RM) "$(tmp)"
 TMPS += loader-head.bin
 
-loader-title.inc: loader-title.pbm tools/revbits
+loader-title.inc: loader-title.pbm $(PBM2ASM)
 	$(PBM2ASM) $< > $@
 TMPS += loader-title.inc
 
@@ -95,7 +160,7 @@ loader-body.bin: startup.bin loader-asm.bin
 	cat $^ > $@
 TMPS += loader-body.bin
 
-loader-body.bas: loader-body.bin
+loader-body.bas: loader-body.bin $(BIN2BAS)
 	$(BIN2BAS) $< > $(tmp)
 	head -n-1 $(tmp) > $@
 	tail -n 1 $(tmp) | sed -re 's/(.+)\\/\1/' >> $@
@@ -123,8 +188,14 @@ test.wav: test.tap
 	$(MKWAV) $< $@
 TMPS += test.wav
 
-all: tools/revbits test.tap test.wav
+# all
+
+all: test.tap test.wav
+
+# clean
 
 clean:
 	$(RM) $(TMPS)
-	make -C tools -f revbits.mk clean
+
+dist-clean: clean-tools clean-conf
+	$(RM) $(TMPS)
