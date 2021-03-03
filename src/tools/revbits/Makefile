@@ -2,15 +2,15 @@ CC     = gcc
 CFLAGS = -O3 -Wall
 EXES   = revbits
 
-.PHONY: empty clean
+.PHONY: usage clean
 
-empty:
+usage:
 	@echo 'Usage:'; \
 	echo '  make [ all | clean ]'
 
 all: $(EXES)
 
-%: %.c
+revbits: main.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 clean:

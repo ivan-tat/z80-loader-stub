@@ -78,15 +78,15 @@ usage:
 
 # tools
 
-$(PBM2ASM): tools/revbits
+$(PBM2ASM): tools/revbits/revbits
 
-build-revbits: tools/revbits
+build-revbits: tools/revbits/revbits
 
-tools/revbits: tools/revbits.mk
-	$(MAKE) $(MFLAGS) -C $(<D) -f $(<F) all
+tools/revbits/revbits: tools/revbits/Makefile
+	$(MAKE) $(MFLAGS) -C $(<D) all
 
-clean-revbits: tools/revbits.mk
-	$(MAKE) $(MFLAGS) -C $(<D) -f $(<F) clean
+clean-revbits: tools/revbits/Makefile
+	$(MAKE) $(MFLAGS) -C $(<D) clean
 
 build-tools: build-revbits
 

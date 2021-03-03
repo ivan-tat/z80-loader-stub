@@ -1,5 +1,7 @@
 /*
- * revbits.c - reverse order of bits in all bytes.
+ * main.c - main program.
+ *
+ * revbits - reverse order of bits in all bytes.
  *
  * Public domain.
  */

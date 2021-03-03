@@ -12,7 +12,7 @@
 
 set -e
 
-REVBITS=`dirname $0`/revbits
+REVBITS=`dirname $0`/revbits/revbits
 
 if [ "$#" -ne 1 ]; then
     echo "Usage:
